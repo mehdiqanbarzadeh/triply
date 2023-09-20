@@ -1,0 +1,7 @@
+employeeId,vehicleIdCode, vehicleType, vehicleMileage
+E1,V1, VAN, 100
+E2,V2, TAXI, 300
+E6,V6, BUS, 140
+E3,V3, DUMP_TRUCK, 100
+E4,V4, CEMENT_MIXER, 100
+E5,V5, AMBULANCE, 100

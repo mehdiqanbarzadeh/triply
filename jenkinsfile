@@ -1,0 +1,114 @@
+def registryURL = "private.registryURL.info"
+def registryMirror = "https://private.registryURL.info"
+def project = "${JOB_NAME}"
+def namespace = "app"
+def chart_name = "main/app-chart"
+def deployerTag = Jenkins.instance.getItem("build-deployer").lastSuccessfulBuild.number
+def baseimageTag = Jenkins.instance.getItem("build-baseimage-java17").lastSuccessfulBuild.number
+pipeline {
+  agent {
+    kubernetes {
+      yaml """
+kind: Pod
+spec:
+  serviceAccountName: deployer-sa
+  containers:
+  - name: dind
+    image: ${registryURL}/baseimage-java17:${baseimageTag}
+    imagePullPolicy: IfNotPresent
+    command:
+      - dockerd-entrypoint.sh
+      - "--registry-mirror=$registryMirror"
+    securityContext:
+      privileged: true
+    resources:
+      requests:
+        ephemeral-storage: "4Gi"
+    volumeMounts:
+      - name: reg-ci-secret
+        mountPath: /root/.docker/config.json
+        subPath: config.json
+  - name: deployer
+    image:  ${registryURL}/deployer:${deployerTag}
+    imagePullPolicy: IfNotPresent
+    tty: true
+    command:
+      - /bin/cat
+  volumes:
+    - name: reg-ci-secret
+      secret:
+        secretName: regsecret
+        defaultMode: 256
+        items:
+          - key: .dockerconfigjson
+            path: config.json
+"""
+    }
+  }
+      stage('Clean') {
+        steps {
+            container('dind') {
+                sh """
+                    mvn -s ${MAVEN_SETTINGS} clean
+                """
+          }
+        }
+      }
+      stage('SonarQube Analysis') {
+        when {
+          expression {env.GIT_BRANCH == 'origin/staging'}
+        }
+        steps {
+          container('dind') {
+              withSonarQubeEnv(installationName: 'sonarqube') {
+                sh """
+                  mvn -s ${MAVEN_SETTINGS} clean verify sonar:sonar \
+                      -Dsonar.projectKey=${project} \
+                      -DaltDeploymentRepository=nexus-releases::default::${MAVEN_REPO}
+                """
+            }
+          }
+        }
+      }
+      stage('Build Spec') {
+        steps {
+            container('dind') {
+                     sh """
+                      mvn -s ${MAVEN_SETTINGS} --projects :${project}-parent,:${project}-spec source:jar-no-fork install deploy -DaltDeploymentRepository=nexus-releases::default::${MAVEN_REPO}
+                     """
+          }
+        }
+      }
+      stage('Test') {
+        steps {
+            container('dind') {
+                sh """
+                   mvn -s ${MAVEN_SETTINGS} -DfailIfNoTests=false test -Dtest='*IT'
+                """
+          }
+        }
+      }
+      stage('Push Image') {
+        steps {
+            container('dind') {
+                sh """
+                  mvn -s $MAVEN_SETTINGS -f ./${project}/pom.xml -X jib:build -Ddocker.repo=$DOCKER_REPO
+                """
+          }
+        }
+      }
+      stage('Deploy') {
+        steps {
+            container('deployer') {
+              sh """
+                  helm repo update
+                  helm upgrade --install -n ${namespace} -f ${env.HELM} \
+                  --set image.repository=${DOCKER_REPO}/${project} \
+                  --set image.tag="${BUILD_NUMBER}-${GIT_COMMIT}" \
+                  ${project} ${chart_name} --wait --timeout ${timeout} --description ${GIT_COMMIT}
+              """
+          }
+        }
+      }
+    }
+  }

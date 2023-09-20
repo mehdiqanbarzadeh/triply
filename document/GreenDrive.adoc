@@ -1,0 +1,573 @@
+= GREEN DRIVE
+:toc: left
+:sectnums:
+
+Green Drive consists of 6 EndPoint:
+
+* login into Ecosystem
+* Register New Company
+* Upload Company Fleet
+* Retrieve Company Emission
+* Retrieve Employee Emission
+* Retrieve Replaceable Vehicles
+
+== Login
+
+At very first step you need to login to ecosystem and get your authorization token.
+
+=== Address
+
+[source,http request,options="nowrap"]
+----
+POST /api/getToken
+----
+
+
+=== HTTP headers
+
+[cols="1,3"]
+|===
+|Name |Description
+|`+Content-Type+` | Must be `+application/json+`
+|===
+
+
+=== Request Body
+
+[cols="1,1,1,3"]
+|===
+|Name |Type |Required |Description
+
+|`+email+`
+|`+String+`
+|Yes
+|The field represents the user email.
+
+|`+password+`
+|`+String+`
+|Yes
+|The field represents user password.
+|===
+
+=== Response fields
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+|`+token+`
+|`+String+`
+|This field is user token for accessing APIs.
+
+|`+result.status+`
+|`+Integer+`
+|Numeric code of the result.
+
+|`+result.message+`
+|`+String+`
+|A descriptive message for the result.
+
+|`+result.level+`
+|`+String+`
+|Result level.
+|===
+
+
+=== HTTP request example
+
+[source,http request,options="nowrap"]
+----
+curl --location 'http://localhost:8090/api/getToken'
+--header 'Content-Type: application/json'
+--header 'Accept-Encoding: UTF8'
+--data-raw '{
+    "email": "test@gmail.com",
+    "password": "Test@123123"
+}'
+----
+
+=== HTTP response example
+
+[source,http response,options="nowrap"]
+----
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+{
+    "result": {
+        "title": "SUCCESS",
+        "status": 0,
+        "message": "success",
+        "level": "INFO"
+    },
+    "token": "eyJhbGciOiJIUzI1NiJ9.eyJtYW5hZ2VtZW50OnJlYWQiOiJtYW5hZ2VtZW50OnJlYWQiLCJtYW5hZ2VtZW50OmRlbGV0ZSI6Im1hbmFnZW1lbnQ6ZGVsZXRlIiwiYWRtaW46dXBkYXRlIjoiYWRtaW46dXBkYXRlIiwibWFuYWdlbWVudDpjcmVhdGUiOiJtYW5hZ2VtZW50OmNyZWF0ZSIsImFkbWluOnJlYWQiOiJhZG1pbjpyZWFkIiwibWFuYWdlbWVudDp1cGRhdGUiOiJtYW5hZ2VtZW50OnVwZGF0ZSIsIlJPTEVfQURNSU4iOiJST0xFX0FETUlOIiwiYWRtaW46ZGVsZXRlIjoiYWRtaW46ZGVsZXRlIiwiYWRtaW46Y3JlYXRlIjoiYWRtaW46Y3JlYXRlIiwic3ViIjoidGVzdEBnbWFpbC5jb20iLCJpYXQiOjE2OTUxOTgxNDEsImV4cCI6MTY5NTI4NDU0MX0.vESqrz2inlltdXiLvehgAPvJ_JBnUIUna_pIRT3tJdM"
+}
+----
+
+=== Address
+
+[source,http request,options="nowrap"]
+----
+POST /company/register
+----
+
+=== HTTP headers
+
+[cols="1,3"]
+|===
+|Name |Description
+
+|`+Authorization+` | Auth access token issued to bearer
+|`+Content-Type+` | Must be `+application/json;charset=UTF-8+`
+|===
+
+
+=== Request Body
+
+[cols="1,1,1,3"]
+|===
+|Name |Type |Required |Description
+
+|`+name+`
+|`+String+`
+|Yes
+|The field represents the Company Name.
+
+|===
+
+=== Response fields
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+|`+name+`
+|`+String+`
+|This field is Company Name.
+
+|`+companyCode+`
+|`+String+`
+|This field represents company uniqId.
+
+|`+result.status+`
+|`+Integer+`
+|Numeric code of the result.
+
+|`+result.message+`
+|`+String+`
+|A descriptive message for the result.
+
+|`+result.level+`
+|`+String+`
+|Result level.
+|===
+
+
+=== HTTP request example
+
+[source,http request,options="nowrap"]
+----
+curl --location 'localhost:8090/company/register'
+--header 'Content-Type: application/json'
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJtYW5hZ2VtZW50OnJlYWQiOiJtYW5hZ2VtZW50OnJlYWQiLCJtYW5hZ2VtZW50OmRlbGV0ZSI6Im1hbmFnZW1lbnQ6ZGVsZXRlIiwiYWRtaW46dXBkYXRlIjoiYWRtaW46dXBkYXRlIiwibWFuYWdlbWVudDpjcmVhdGUiOiJtYW5hZ2VtZW50OmNyZWF0ZSIsImFkbWluOnJlYWQiOiJhZG1pbjpyZWFkIiwibWFuYWdlbWVudDp1cGRhdGUiOiJtYW5hZ2VtZW50OnVwZGF0ZSIsIlJPTEVfQURNSU4iOiJST0xFX0FETUlOIiwiYWRtaW46ZGVsZXRlIjoiYWRtaW46ZGVsZXRlIiwiYWRtaW46Y3JlYXRlIjoiYWRtaW46Y3JlYXRlIiwic3ViIjoidGVzdEBnbWFpbC5jb20iLCJpYXQiOjE2OTUxOTgxNDEsImV4cCI6MTY5NTI4NDU0MX0.vESqrz2inlltdXiLvehgAPvJ_JBnUIUna_pIRT3tJdM'
+--data '{
+    "name":"test-name"
+}'
+----
+
+=== HTTP response example
+
+[source,http response,options="nowrap"]
+----
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+{
+    "result": {
+        "title": "SUCCESS",
+        "status": 0,
+        "message": "success",
+        "level": "INFO"
+    },
+    "companyCode": "1695198740040-7691",
+    "name": "test-name"
+}
+----
+
+== Upload Company Fleet
+This endpoint receives a valid csv file and after validation store them in database.
+
+=== Address
+
+[source,http request,options="nowrap"]
+----
+POST /company/upload
+----
+
+=== Query parameters
+
+[cols="1,3"]
+|===
+|Name |Description
+
+|`+companyCode+` | this code generates in previous step.
+|===
+
+=== HTTP headers
+
+[cols="1,3"]
+|===
+|Name |Description
+
+|`+Authorization+` | Auth access token issued to bearer
+|`+Content-Type+` | Must be `+application/json;charset=UTF-8+`
+|===
+
+
+=== Request Body
+
+[cols="1,1,1,3"]
+|===
+|Name |Type |Required |Description
+
+|`+file+`
+|`+form-data(File)+`
+|Yes
+|The file must be a valid csv.
+
+|===
+=== Response fields
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+|`+message+`
+|`+String+`
+|This field represents message of upload result.
+
+|`+result.status+`
+|`+Integer+`
+|Numeric code of the result.
+
+|`+result.message+`
+|`+String+`
+|A descriptive message for the result.
+
+|`+result.level+`
+|`+String+`
+|result level.
+
+|===
+
+=== HTTP request example
+
+[source,http request,options="nowrap"]
+----
+curl --location 'http://localhost:8090/company/upload?companyCode=1695198740040-7691' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJtYW5hZ2VtZW50OnJlYWQiOiJtYW5hZ2VtZW50OnJlYWQiLCJtYW5hZ2VtZW50OmRlbGV0ZSI6Im1hbmFnZW1lbnQ6ZGVsZXRlIiwiYWRtaW46dXBkYXRlIjoiYWRtaW46dXBkYXRlIiwibWFuYWdlbWVudDpjcmVhdGUiOiJtYW5hZ2VtZW50OmNyZWF0ZSIsImFkbWluOnJlYWQiOiJhZG1pbjpyZWFkIiwibWFuYWdlbWVudDp1cGRhdGUiOiJtYW5hZ2VtZW50OnVwZGF0ZSIsIlJPTEVfQURNSU4iOiJST0xFX0FETUlOIiwiYWRtaW46ZGVsZXRlIjoiYWRtaW46ZGVsZXRlIiwiYWRtaW46Y3JlYXRlIjoiYWRtaW46Y3JlYXRlIiwic3ViIjoidGVzdEBnbWFpbC5jb20iLCJpYXQiOjE2OTUxOTgxNDEsImV4cCI6MTY5NTI4NDU0MX0.vESqrz2inlltdXiLvehgAPvJ_JBnUIUna_pIRT3tJdM' \
+--form 'file=@"./valid_company_fleet.csv"'
+----
+
+=== HTTP response example
+
+[source,http response,options="nowrap"]
+----
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+{
+    "result": {
+        "title": "SUCCESS",
+        "status": 0,
+        "message": "success",
+        "level": "INFO"
+    },
+    "message": "Uploaded the file successfully: valid_company_fleet.csv"
+}
+----
+
+== Company Emission
+Getting company fleet emissions
+
+=== Address
+
+[source,http request,options="nowrap"]
+----
+GET  /company/emission/{companyCode}
+----
+
+=== Request path variable
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+|`+companyCode+`
+|`+String+`
+|The field represents company uniqId that generate in register time.
+
+|===
+=== Response fields
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+
+|`+result.status+`
+|`+Integer+`
+|Numeric code of the result.
+
+|`+result.message+`
+|`+String+`
+|A descriptive message for the result.
+
+|`+result.level+`
+|`+String+`
+|result level.
+
+|`+vehicleType+`
+|`+String+`
+|This field represents vehicleType.
+
+
+|`+averageEmission+`
+|`+String+`
+|This field represents average emission of vehicleType from last week.
+
+
+|`+totalMileages+`
+|`+Long+`
+|This field represents total mileages of that specific vehicleType from last week.
+
+
+|`+totalEmissions+`
+|`+Long+`
+|This field represents total emissions of vehicleType from last week.
+
+
+|`+totalVehicles+`
+|`+Long+`
+|This field represents total vehicles of specific vehicleType.
+|===
+
+=== HTTP request example
+
+[source,http request,options="nowrap"]
+----
+curl --location 'http://localhost:8090/company/emissions/1695200555482-0989' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJtYW5hZ2VtZW50OnJlYWQiOiJtYW5hZ2VtZW50OnJlYWQiLCJtYW5hZ2VtZW50OmRlbGV0ZSI6Im1hbmFnZW1lbnQ6ZGVsZXRlIiwiYWRtaW46dXBkYXRlIjoiYWRtaW46dXBkYXRlIiwibWFuYWdlbWVudDpjcmVhdGUiOiJtYW5hZ2VtZW50OmNyZWF0ZSIsImFkbWluOnJlYWQiOiJhZG1pbjpyZWFkIiwibWFuYWdlbWVudDp1cGRhdGUiOiJtYW5hZ2VtZW50OnVwZGF0ZSIsIlJPTEVfQURNSU4iOiJST0xFX0FETUlOIiwiYWRtaW46ZGVsZXRlIjoiYWRtaW46ZGVsZXRlIiwiYWRtaW46Y3JlYXRlIjoiYWRtaW46Y3JlYXRlIiwic3ViIjoidGVzdEBnbWFpbC5jb20iLCJpYXQiOjE2OTUyMDA0MjIsImV4cCI6MTY5NTI4NjgyMn0.JHKuLuRtTwggvgfKdr_4WXmZgOoMFemEBFsRoNCrBbE'
+----
+
+=== HTTP response example
+
+[source,http response,options="nowrap"]
+----
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+{
+    "result": {
+        "title": "SUCCESS",
+        "status": 0,
+        "message": "success",
+        "level": "INFO"
+    },
+    "vehicleAverageEmissions": [
+        {
+            "vehicleType": "DUMP_TRUCK",
+            "averageEmission": 40000,
+            "totalMileages": 300,
+            "totalEmissions": 120000,
+            "totalVehicles": 3
+        },
+        {
+            "vehicleType": "AMBULANCE",
+            "averageEmission": 22000,
+            "totalMileages": 900,
+            "totalEmissions": 198000,
+            "totalVehicles": 9
+        }
+    ]
+}
+----
+
+== Employee Emission
+Getting specific employee fleet emissions
+
+=== Address
+
+[source,http request,options="nowrap"]
+----
+GET  /vehicle/emissions/{employeeId}
+----
+
+=== Request path variable
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+|`+employeeId+`
+|`+String+`
+|The field represents employeeId.
+
+|===
+=== Response fields
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+
+|`+result.status+`
+|`+Integer+`
+|Numeric code of the result.
+
+|`+result.message+`
+|`+String+`
+|A descriptive message for the result.
+
+|`+result.level+`
+|`+String+`
+|result level.
+
+|`+vehicleType+`
+|`+String+`
+|This field represents vehicleType.
+
+
+|`+averageEmission+`
+|`+String+`
+|This field represents average emission of vehicleType from last week.
+
+
+|`+totalMileages+`
+|`+Long+`
+|This field represents total mileages of that specific vehicleType from last week.
+
+
+|`+totalEmissions+`
+|`+Long+`
+|This field represents total emissions of vehicleType from last week.
+
+
+|`+totalVehicles+`
+|`+Long+`
+|This field represents total vehicles of specific vehicleType.
+|===
+
+=== HTTP request example
+
+[source,http request,options="nowrap"]
+----
+curl --location 'http://localhost:8090/api/vehicle/emissions/E1' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJtYW5hZ2VtZW50OnJlYWQiOiJtYW5hZ2VtZW50OnJlYWQiLCJtYW5hZ2VtZW50OmRlbGV0ZSI6Im1hbmFnZW1lbnQ6ZGVsZXRlIiwiYWRtaW46dXBkYXRlIjoiYWRtaW46dXBkYXRlIiwibWFuYWdlbWVudDpjcmVhdGUiOiJtYW5hZ2VtZW50OmNyZWF0ZSIsImFkbWluOnJlYWQiOiJhZG1pbjpyZWFkIiwibWFuYWdlbWVudDp1cGRhdGUiOiJtYW5hZ2VtZW50OnVwZGF0ZSIsIlJPTEVfQURNSU4iOiJST0xFX0FETUlOIiwiYWRtaW46ZGVsZXRlIjoiYWRtaW46ZGVsZXRlIiwiYWRtaW46Y3JlYXRlIjoiYWRtaW46Y3JlYXRlIiwic3ViIjoidGVzdEBnbWFpbC5jb20iLCJpYXQiOjE2OTUyMDA0MjIsImV4cCI6MTY5NTI4NjgyMn0.JHKuLuRtTwggvgfKdr_4WXmZgOoMFemEBFsRoNCrBbE'
+----
+
+=== HTTP response example
+
+[source,http response,options="nowrap"]
+----
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+{
+    "result": {
+        "title": "SUCCESS",
+        "status": 0,
+        "message": "success",
+        "level": "INFO"
+    },
+    "vehicleEmissionsReports": [
+        {
+            "vehicleType": "DUMP_TRUCK",
+            "averageEmission": 40000,
+            "totalMileages": 300,
+            "totalEmissions": 120000,
+            "totalVehicles": 3
+        },
+        {
+            "vehicleType": "AMBULANCE",
+            "averageEmission": 22000,
+            "totalMileages": 900,
+            "totalEmissions": 198000,
+            "totalVehicles": 9
+        }
+    ]
+}
+----
+
+== Vehicle Suggestion
+This endpoint represents this vehicle that would be replaced with Electric Vehicles
+
+=== Address
+
+[source,http request,options="nowrap"]
+----
+GET /vehicle/suggestion
+----
+
+=== HTTP headers
+
+[cols="1,3"]
+|===
+|Name |Description
+
+|`+Authorization+` | Auth access token issued to bearer
+|`+Content-Type+` | Must be `+application/json;charset=UTF-8+`
+|===
+
+
+=== Response fields
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+|`+vehicleCode+`
+|`+String+`
+|This field represents specific id.
+
+|`+employeeId+`
+|`+String+`
+|This field represents employeeId.
+
+|`+mileage+`
+|`+Long+`
+|This field represents vehicle mileage.
+
+|`+vehicleType+`
+|`+String+`
+|This field represents vehicle Type.
+
+|`+result.status+`
+|`+Integer+`
+|Numeric code of the result.
+
+|`+result.message+`
+|`+String+`
+|A descriptive message for the result.
+
+|`+result.level+`
+|`+String+`
+|result level.
+
+|===
+
+
+== HTTP response codes
+
+NOTE: We use conventional HTTP response codes to indicate the success or failure of an API request.
+
+* HTTP code 200 indicates success.
+* HTTP code 400 indicates invalid params.
+* HTTP code 401 and 403 indicates unauthenticated user and unauthorized access respectively.
+* HTTP code 422 (Unprocessable Entity) indicates business errors.
+* HTTP code 500 indicates internal errors.
+
+
+== Version history
+
+[cols="1,1,2,3"]
+|===
+|Version |Date |Author| Description
+
+|1.0 |09/20/2023 |Mehdi Qanbarzade |
+|===
